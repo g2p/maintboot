@@ -1,0 +1,74 @@
+#!/usr/bin/env python3.3
+import argparse
+import os
+import platform
+import shutil
+import subprocess
+import sys
+import tempfile
+
+
+INIT_MODE_BITS = int('0755', 8)
+
+
+class TDirNoCleanup(tempfile.TemporaryDirectory):
+    def cleanup(self, _warn=False):
+        pass
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--pkgs', nargs='+', required=True, metavar='PKG')
+    parser.add_argument('--initscript', required=True, metavar='FILE')
+    parser.add_argument('--append', nargs='+', default=[], metavar='KARG')
+    when = parser.add_mutually_exclusive_group()
+    when.add_argument('--deferred', action='store_true')
+    when.add_argument('--immediate', action='store_true')
+    parser.add_argument('--keep-temps', action='store_true')
+    args = parser.parse_args()
+
+    # XXX TemporaryDirectory doesn't take delete=False
+    if args.keep_temps:
+        tdir_impl = TDirNoCleanup
+    else:
+        tdir_impl = tempfile.TemporaryDirectory
+
+    assert not any(' ' in arg for arg in args.append), args.append
+
+    with tdir_impl(prefix='maintboot.') as tdir:
+        smd = tdir + '/supermin.d'
+        os.mkdir(smd)
+        subprocess.check_call(
+            'supermin --names --use-installed -o'.split() + [smd] + args.pkgs)
+        shutil.copyfile(args.initscript, tdir + '/init')
+        os.chmod(tdir + '/init', INIT_MODE_BITS)
+        with open(smd + '/init.cpio', 'w') as cpio:
+            subp = subprocess.Popen(
+                'cpio --quiet -o -H newc'.split(),
+                cwd=tdir, stdin=subprocess.PIPE, stdout=cpio)
+            subp.communicate(b'init\n')
+            if subp.returncode:
+                raise subprocess.CalledProcessError
+        subprocess.check_call(
+            ['supermin-helper', '--', smd, platform.machine(),
+             tdir + '/kernel', tdir + '/initramfs'])
+        subprocess.check_call(
+            'kexec -l'.split()
+            + ['--command-line', ' '.join(args.append)]
+            + ['--initrd', tdir + '/initramfs', tdir + '/kernel'])
+
+    if not args.deferred:
+        if args.immediate:
+            subprocess.check_call(['kexec', '-e'])
+        else:
+            # init will shut down services and call kexec -e
+            subprocess.check_call(['shutdown', 'now'])
+
+
+def script_main():
+    sys.exit(main())
+
+
+if __name__ == '__main__':
+    script_main()
+
