@@ -1,0 +1,27 @@
+Source: maintboot
+Maintainer: Gabriel de Perthuis <g2p.code+debian@gmail.com>
+Section: python
+Priority: optional
+Build-Depends: python3-setuptools (>= 0.6b3), python3, debhelper (>= 7.4.3)
+Homepage: https://github.com/g2p/maintboot
+Standards-Version: 3.9.4
+X-Python3-Version: 3.3
+
+Package: python3-maintboot
+Architecture: all
+Depends: ${misc:Depends}, ${python3:Depends}, supermin|febootstrap
+Description: Run commands outside of the current OS
+ maintboot runs commands outside of the current OS,
+ with exclusive access to the system and hardware.
+ .
+ This can be useful to run maintenance tasks,
+ like repartitioning, in a controlled environment.
+ .
+ Maintboot builds an appliance on the fly from a list
+ of packages (using supermin).
+ It then loads the appliance with kexec, bypassing
+ the bios, and runs the maintenance script in that
+ new context.
+ .
+ See https://github.com/g2p/maintboot#readme
+ for usage instructions.
