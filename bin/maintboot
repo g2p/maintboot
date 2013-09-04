@@ -27,6 +27,17 @@ def main():
     parser.add_argument('--keep-temps', action='store_true')
     args = parser.parse_args()
 
+    if shutil.which('supermin') is not None:
+        sm_cmd = 'supermin'
+        smh_cmd = 'supermin-helper'
+    elif shutil.which('febootstrap') is not None:
+        sm_cmd = 'febootstrap'
+        smh_cmd = 'febootstrap-supermin-helper'
+    else:
+        print('supermin command not found, please install'
+              ' supermin (preferred) or febootstrap (obsolete)')
+        exit(2)
+
     # XXX TemporaryDirectory doesn't take delete=False
     if args.keep_temps:
         tdir_impl = TDirNoCleanup
@@ -39,7 +50,7 @@ def main():
         smd = tdir + '/supermin.d'
         os.mkdir(smd)
         subprocess.check_call(
-            'supermin --names --use-installed -o'.split() + [smd] + args.pkgs)
+            [sm_cmd] + '--names --use-installed -o'.split() + [smd] + args.pkgs)
         shutil.copyfile(args.initscript, tdir + '/init')
         os.chmod(tdir + '/init', INIT_MODE_BITS)
         with open(smd + '/init.cpio', 'w') as cpio:
@@ -50,7 +61,7 @@ def main():
             if subp.returncode:
                 raise subprocess.CalledProcessError
         subprocess.check_call(
-            ['supermin-helper', '--', smd, platform.machine(),
+            [smh_cmd, '--', smd, platform.machine(),
              tdir + '/kernel', tdir + '/initramfs'])
         subprocess.check_call(
             'kexec -l'.split()
