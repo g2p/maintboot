@@ -73,7 +73,9 @@ def main():
             subprocess.check_call(['kexec', '-e'])
         else:
             # init will shut down services and call kexec -e
-            subprocess.check_call(['shutdown', 'now'])
+            # note: must use a shutdown flag, otherwise goes
+            # to single-user mode
+            subprocess.check_call(['shutdown', '-r', 'now'])
 
 
 def script_main():
