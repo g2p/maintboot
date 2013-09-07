@@ -11,7 +11,7 @@ setup(
     url='https://github.com/g2p/maintboot',
     license='GNU GPL',
     keywords='kexec maintenance booting',
-    description='run commands outside of the current OS',
+    description='Run maintenance tasks outside the OS',
     scripts=['bin/maintboot'],
     classifiers='''
         Programming Language :: Python :: 3
