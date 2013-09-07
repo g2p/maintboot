@@ -10,7 +10,7 @@ X-Python3-Version: 3.3
 Package: python3-maintboot
 Architecture: all
 Depends: ${misc:Depends}, ${python3:Depends}, supermin|febootstrap
-Description: Run commands outside of the current OS
+Description: Run maintenance tasks outside the OS
  maintboot runs commands outside of the current OS,
  with exclusive access to the system and hardware.
  .
